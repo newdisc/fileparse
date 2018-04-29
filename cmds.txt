@@ -1,0 +1,4 @@
+CP=$(find . -type f -name *.jar | xargs echo | sed 's/ /:/g')
+DBG=-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=y
+mvn clean package
+java $DBG -cp $CP com.newdisc.App ~/dev/dwld/sms-20180418091036.xml b c 2>&1 | more
