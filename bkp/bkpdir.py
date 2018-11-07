@@ -13,6 +13,11 @@ import time
 from shutil import copy2
 
 def getSha( filename ):
+	shafiledata = None
+	if ( os.path.isfile(filename + ".sha256") ):
+		with open(filename + ".sha256", 'r') as myfile:
+			shafiledata = myfile.read().replace('\n', '')
+		return shafiledata
 	BLOCKSIZE = 65536
 	hasher = hashlib.sha256()
 	with open(filename, 'rb') as afile:
@@ -70,6 +75,7 @@ def bkpSD(srcdir, destdir):
 	doc_re = re.compile(os.sep + r"doc" + os.sep)
 	dup_re = re.compile(os.sep + r"dup" + os.sep)
 	junk_re = re.compile(os.sep + r"junk" + os.sep)
+	vid_re = re.compile(r"\.mkv$|\.mp4$|\.THM$")
 	allstart = time.clock()
 	for root, dirs, files in os.walk(srcdir):
 		print "\n------------------------------------------"
@@ -90,6 +96,8 @@ def bkpSD(srcdir, destdir):
 				print "Could not determine file date ", fullname
 				continue
 			dtype = "backup"
+			if ( re.search(vid_re, file) ):
+				dtype = "vid"
 			if ( re.search(doc_re, root) ):
 				dtype = "doc"
 			if ( re.search(dup_re, root) ):
@@ -148,11 +156,14 @@ def safecrdir(dname):
 
 if (args.verify):
 	verifySha(args.destination)
+	print "Done Verification"
+	exit(0)
 
 safecrdir(os.path.join(args.destination, "backup"))
 safecrdir(os.path.join(args.destination, "doc"))
 safecrdir(os.path.join(args.destination, "dup"))
 safecrdir(os.path.join(args.destination, "junk"))
+safecrdir(os.path.join(args.destination, "vid"))
 
 bkpSD(args.source, args.destination)
 
