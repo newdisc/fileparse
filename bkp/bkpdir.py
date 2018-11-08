@@ -10,14 +10,16 @@ import pprint
 from ymd import YMD
 import sys
 import time
-from shutil import copy2
+from shutil import copy2, move
 
-def getSha( filename ):
+def getSha( filename, forcecalc ):
 	shafiledata = None
-	if ( os.path.isfile(filename + ".sha256") ):
+	if ( not(forcecalc) and os.path.isfile(filename + ".sha256") ):
 		with open(filename + ".sha256", 'r') as myfile:
 			shafiledata = myfile.read().replace('\n', '')
 		return shafiledata
+	if ( not os.path.isfile(filename) ):
+		return None
 	BLOCKSIZE = 65536
 	hasher = hashlib.sha256()
 	with open(filename, 'rb') as afile:
@@ -53,7 +55,7 @@ def verifySha(basedir):
 				sys.stdout.write('!')
 				#print "!"
 				continue
-			shasm = getSha(fullname)
+			shasm = getSha(fullname, True)
 			if (shafiledata != shasm):
 				print "<>", fullname
 				sys.stdout.write('<>')
@@ -69,13 +71,13 @@ def writeSha(fname, shadig):
 	with open(fname, "w") as text_file:
 		text_file.write(shadig)
 
-def bkpSD(srcdir, destdir):
+def bkpSD(srcdir, destdir, procmove):
 	i=0
 	sha_re = re.compile(r".*.sha256");
 	doc_re = re.compile(os.sep + r"doc" + os.sep)
 	dup_re = re.compile(os.sep + r"dup" + os.sep)
 	junk_re = re.compile(os.sep + r"junk" + os.sep)
-	vid_re = re.compile(r"\.mkv$|\.mp4$|\.THM$")
+	vid_re = re.compile(r"\.mkv$|\.mp4$|\.THM$|\.avi$")
 	allstart = time.clock()
 	for root, dirs, files in os.walk(srcdir):
 		print "\n------------------------------------------"
@@ -108,14 +110,16 @@ def bkpSD(srcdir, destdir):
 			safecrdir(destdfull)
 			destfile = os.path.join(destdfull, file)
 			shaname = destfile + ".sha256"
-			shasm = getSha(fullname)
-			shafiledata = shasm
-			if ( os.path.isfile(shaname) ):
-				with open(shaname, 'r') as myfile:
-					shafiledata = myfile.read().replace('\n', '')
-			else:
-				#print "Creating sha256 file"
+			shasm = getSha(fullname, False)
+			shafiledata = getSha(destfile, False);#shasm
+			if (None == shafiledata):
+				shafiledata = shasm
+			if ( not os.path.isfile(shaname) ):
+				print "Creating sha256 file"
 				writeSha(shaname, shafiledata)
+                        if (None != procmove and shafiledata == shasm and not(os.path.isfile(os.path.join(procmove, "processed", file))) ):
+				print "Moving ", fullname
+				move(fullname,os.path.join(procmove, "processed"))
 			if (shafiledata != shasm):
 				print "<>", fullname
 				sys.stdout.write('<>')
@@ -131,18 +135,18 @@ def bkpSD(srcdir, destdir):
 		#your code here    
 		print "\nRoot: ", root, " took ", (time.clock() - start)
 		sys.stdout.flush()
-		if (1<=i):
-			break;
+		#if (1<=i):
+		#	break;
 	print "\nAllSrc: ", srcdir, " took ", (time.clock() - allstart)
 
 parser = argparse.ArgumentParser(description="Backup files @Source into Time Ordered @Destination")
 parser.add_argument("-s", "--source", help="Source Directory", required=True)
 parser.add_argument("-d", "--destination", help="Source Directory", default=os.getcwd())
 parser.add_argument("--verify", help="Verify checksums", required=False, default=False, action='store_true')
-parser.add_argument("-m", "--move", help="Move on backup", required=False, default=False, action='store_true')
+parser.add_argument("-m", "--move", help="Move on backup dir", required=False, default=None)
 args = parser.parse_args()
 
-print "Backing up ", args.source, " at ", args.destination, " and verifying ", args.verify
+print "Backing up ", args.source, " at ", args.destination, " and verifying ", args.verify, " and moving " , args.move
 
 #my $pat = "IMG-(2018)(04)(15)-WA0065.jpg";#"IMG_(2018)(06)(09)_200728.jpg";
 # os.path.getmtime(path)
@@ -165,40 +169,44 @@ safecrdir(os.path.join(args.destination, "dup"))
 safecrdir(os.path.join(args.destination, "junk"))
 safecrdir(os.path.join(args.destination, "vid"))
 
-bkpSD(args.source, args.destination)
+if (args.move):
+	safecrdir(os.path.join(args.move, "processed"))
+        
 
-exit(0)
+bkpSD(args.source, args.destination, args.move)
 
-i=0
-sha_re = re.compile(r".*.sha256");
-for root, dirs, files in os.walk(args.source):
-	print "------------------------------------------"
-	print "Root: ", root
+#exit(0)
+
+#i=0
+#sha_re = re.compile(r".*.sha256");
+#for root, dirs, files in os.walk(args.source):
+#	print "------------------------------------------"
+#	print "Root: ", root
 	#print "Dirs: ", dirs
 	#print "Files: ", files
-	for file in files:
-		if re.match(sha_re, file):
-			print "Shasum file"
-			continue
-		fullname = os.path.join(root, file)
-		shaname = fullname + ".sha256"
-		shafiledata = None
-		if ( os.path.isfile(shaname) ):
-			with open(shaname, 'r') as myfile:
-				shafiledata = myfile.read().replace('\n', '')
-		fnymd = None #YMD.getYMD(root, file)
-		if (None == fnymd):
+#	for file in files:
+#		if re.match(sha_re, file):
+#			print "Shasum file"
+#			continue
+#		fullname = os.path.join(root, file)
+#		shaname = fullname + ".sha256"
+#		shafiledata = None
+#		if ( os.path.isfile(shaname) ):
+#			with open(shaname, 'r') as myfile:
+#				shafiledata = myfile.read().replace('\n', '')
+#		fnymd = None #YMD.getYMD(root, file)
+#		if (None == fnymd):
 			#pprint.pprint( fnymd )
-			print "Did NOT find Date/Month/Year"
-		print "ShaSum : ", getSha(fullname)
-		if (None != shafiledata):
-			print "ShaOrig: ", shafiledata
-		if (None != fnymd):
-			i = i+1
-		if (1<=i):
-			break
-	if (1<=i):
-		break
+#			print "Did NOT find Date/Month/Year"
+#		print "ShaSum : ", getSha(fullname)
+#		if (None != shafiledata):
+#			print "ShaOrig: ", shafiledata
+#		if (None != fnymd):
+#			i = i+1
+#		if (1<=i):
+#			break
+#	if (1<=i):
+#		break
 
 
 #with open('data.txt', 'r') as myfile:
@@ -223,4 +231,3 @@ for root, dirs, files in os.walk(args.source):
 #			print exif['DateTime']
 #			#print "+++++ %04d" % (exif['DateTime'].year) 
 #			print "ShaSum : ", getSha(os.path.join(root, file))
-

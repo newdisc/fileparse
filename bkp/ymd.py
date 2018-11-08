@@ -35,9 +35,9 @@ class YMD:
 	def getFromFileExif( filename ):
 		try:
 			img = PIL.Image.open(filename)
+			exif_data = img._getexif()
 		except:
 			return None;
-		exif_data = img._getexif()
 		if (None == exif_data):
 			#print "No EXIF data"
 			return None;
