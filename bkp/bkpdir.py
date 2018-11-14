@@ -77,28 +77,28 @@ def bkpSD(srcdir, destdir, procmove):
 	doc_re = re.compile(os.sep + r"doc" + os.sep)
 	dup_re = re.compile(os.sep + r"dup" + os.sep)
 	junk_re = re.compile(os.sep + r"junk" + os.sep)
-	vid_re = re.compile(r"\.mkv$|\.mp4$|\.THM$|\.avi$")
+	vid_re = re.compile(r"\.mkv$|\.mp4$|\.THM$|\.avi$|\.MOV$")
 	allstart = time.clock()
 	for root, dirs, files in os.walk(srcdir):
 		print "\n------------------------------------------"
 		start = time.clock()
 		#print "Dirs: ", dirs
 		#print "Files: ", files
-		for file in files:
+		for srcfile in files:
 			i = i+1
-			fullname = os.path.join(root, file)
-			#print fullname
-			if re.match(sha_re, file):
+			srcfulln = os.path.join(root, srcfile)
+			#print srcfulln
+			if re.match(sha_re, srcfile):
 				#print "Shasum file"
 				#sys.stdout.write('i')
 				#print "i"
 				continue
-			fnymd = YMD.getYMD(root, file)
+			fnymd = YMD.getYMD(root, srcfile)
 			if ( None == fnymd ): 
-				print "Could not determine file date ", fullname
+				print "\nCould not determine file date ", srcfulln
 				continue
 			dtype = "backup"
-			if ( re.search(vid_re, file) ):
+			if ( re.search(vid_re, srcfile) ):
 				dtype = "vid"
 			if ( re.search(doc_re, root) ):
 				dtype = "doc"
@@ -108,25 +108,26 @@ def bkpSD(srcdir, destdir, procmove):
 				dtype = "junk"
 			destdfull = os.path.join(destdir, dtype, fnymd.year, fnymd.month)
 			safecrdir(destdfull)
-			destfile = os.path.join(destdfull, file)
-			shaname = destfile + ".sha256"
-			shasm = getSha(fullname, False)
+			destfile = os.path.join(destdfull, srcfile)
+			destshaname = destfile + ".sha256"
+			shasm = getSha(srcfulln, False)
 			shafiledata = getSha(destfile, False);#shasm
-			if (None == shafiledata):
-				shafiledata = shasm
-			if ( not os.path.isfile(shaname) ):
-				print "Creating sha256 file"
-				writeSha(shaname, shafiledata)
-                        if (None != procmove and shafiledata == shasm and not(os.path.isfile(os.path.join(procmove, "processed", file))) ):
-				print "Moving ", fullname
-				move(fullname,os.path.join(procmove, "processed"))
-			if (shafiledata != shasm):
-				print "<>", fullname
+                        shamatch = True
+			if (None != shafiledata and shafiledata != shasm):
+				shamatch = False
+			if ( not os.path.isfile(destshaname) ):
+				print "Creating sha256 file", destshaname
+				writeSha(destshaname, shasm)
+                        if (None != procmove and shamatch and not(os.path.isfile(os.path.join(procmove, "processed", srcfile))) ):
+				print "Moving ", srcfulln
+				move(srcfulln,os.path.join(procmove, "processed"))
+			if (not shamatch):
+				print "<>", srcfulln
 				sys.stdout.write('<>')
 				continue #Do NOT copy / overwrite file
-			if ( False == os.path.isfile(destfile) ):
-				print "Copying ", fullname
-				copy2(fullname, destfile)
+			if ( False == os.path.isfile(destfile) and None == shafiledata ): #Only shafile prevents copying - preserving dup/junk classifies
+				print "Copying ", srcfulln
+				copy2(srcfulln, destfile)
 			sys.stdout.write('.')
 			if (0 == i%10):
 				sys.stdout.flush()
