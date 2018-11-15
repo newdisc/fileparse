@@ -2,11 +2,13 @@
 import os
 import sys
 import time
+import re
 from shutil import copy2, move
 
 from perfile import PerFile
 
 class DirWalk:
+	sha_re = re.compile(r"^(.*).sha256.*")
 	def __init__(self, root, processors):
 		self.root = root
 		self.processors = processors
@@ -24,9 +26,11 @@ class DirWalk:
 			print "\n------------------------------------------", root
 			start = time.clock()
 			for srcfile in srcfiles:
+				if (re.match(DirWalk.sha_re, srcfile)):
+					continue
 				i = i+1
-                                context = dict()
-                                for processor in self.processors:
+				context = dict()
+				for processor in self.processors:
 					processor.processFile(root, srcfile, context)
 				sys.stdout.write('.')
 				if (0 == i%10):
@@ -37,7 +41,7 @@ class DirWalk:
 
 class EchoProcessor(PerFile):
 	def processFile(self, root, filename, context):
-		print "Process File: ", filename
+		print "Process File: ", filename, context
 
 if  __name__ == '__main__':
 	shad = DirWalk(".", { EchoProcessor() })

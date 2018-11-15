@@ -73,7 +73,7 @@ def writeSha(fname, shadig):
 
 def bkpSD(srcdir, destdir, procmove):
 	i=0
-	sha_re = re.compile(r".*.sha256");
+	sha_re = re.compile(r".*.sha256")
 	doc_re = re.compile(os.sep + r"doc" + os.sep)
 	dup_re = re.compile(os.sep + r"dup" + os.sep)
 	junk_re = re.compile(os.sep + r"junk" + os.sep)
