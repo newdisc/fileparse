@@ -27,3 +27,5 @@ if  __name__ == '__main__':
 		  #,EchoProcessor()
 		])
 	shad.walkDir()
+
+#python bkpmain.py -s F:\dev\photos -d E:\archive -m F:\dev\processed2del > oldwin6.txt 2>&1
