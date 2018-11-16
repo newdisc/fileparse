@@ -24,6 +24,6 @@ if  __name__ == '__main__':
 		  ,SHADict(args.source, args.move)
 		  #,SHAVerify() # only run when no source specified 
 		  ,BackupWithSha(args.source, args.destination, args.move)
-		  ,EchoProcessor()
+		  #,EchoProcessor()
 		])
 	shad.walkDir()

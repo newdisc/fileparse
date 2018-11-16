@@ -21,9 +21,13 @@ class BackupWithSha(PerFile):
 	def __init__(self, baseroot, duplroot, procroot):
 		self.baseroot = baseroot
 		self.duplroot = duplroot
-		self.procroot = procroot
-		if (None != self.procroot):
-			self.procroot = os.path.join(self.procroot, BackupWithSha.PRC)
+		self.procroot = None
+		if (None != procroot):
+			if (os.access(procroot, os.W_OK)):
+				self.procroot = os.path.join(procroot, BackupWithSha.PRC)
+				SHADict.safecrdir(self.procroot)
+			else:
+				print "Cannot write to Processed Dir (missing dir?): ", procroot
 		if ( r"/" == os.sep): # Unix
 			BackupWithSha.doc_re = re.compile(os.sep + BackupWithSha.DOC + os.sep)
 			BackupWithSha.dup_re = re.compile(os.sep + BackupWithSha.DUP + os.sep)
@@ -66,11 +70,11 @@ class BackupWithSha(PerFile):
 		bkpsha = SHADict.getSha(bkpfn)
 		shasum = SHADict.getSha(fullname)
 		if (bkpsha == None):
-			print "Backing up file: ", fullname, " to ", bkpfn
+			#print "Backing up file: ", fullname, " to ", bkpfn
 			SHADict.safecrdir(bkproot)
 			SHADict.writeSha(bkpfnsha, shasum)
 		if (bkpsha == None and False == os.path.isfile(bkpfn)):
-			print "Copying ", fullname
+			#print "Copying ", fullname
 			copy2(fullname, bkpfn)
 		if (bkpsha != None and bkpsha != shasum):
 			print "Non matching shasums - please check : ", fullname, " to ", bkpfn
@@ -79,8 +83,8 @@ class BackupWithSha(PerFile):
 			return
 		prcroot = root.replace(self.baseroot,self.procroot)
 		prcfn = os.path.join(prcroot, srcfile)
-		if (not os.path.isfile(prcfn) and os.access(self.procroot, os.W_OK) ):
-			print "\nMoving (processed): ", fullname, " to ", prcfn
+		if (not os.path.isfile(prcfn)):
+			#print "\nMoving (processed): ", fullname, " to ", prcfn
 			SHADict.safecrdir(prcroot)
 			move(fullname, prcfn)
 		else:

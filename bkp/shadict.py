@@ -17,6 +17,7 @@ class SHADict(PerFile):
 		self.duplroot = duplroot
 		if (None != self.duplroot):
 			self.duplroot = self.duplroot + os.sep + "dup" #BackupWithSha.DUP
+			SHADict.safecrdir(self.duplroot)
 
 	@staticmethod
 	def safecrdir(dname):
@@ -75,12 +76,12 @@ class SHADict(PerFile):
 		existName = self.isDup(fullname, context)
 		if None != existName:
 			print "\nDuplicate: ", fullname, " of ", existName
-		if ( None != existName and None != self.duplroot and os.path.isdir(self.duplroot)):
+		if ( None != existName and None != self.duplroot):
 			duproot = root.replace(self.baseroot,self.duplroot)
 			dupfn = os.path.join(duproot, srcfile)
 			SHADict.safecrdir(duproot)
 			if (not os.path.isfile(dupfn) and os.access(duproot, os.W_OK) ):
-				print "\nMoving: ", fullname, " to ", dupfn
+				#print "\nMoving: ", fullname, " to ", dupfn
 				move(fullname, dupfn)
 			else:
 				print "\nExists: ", dupfn

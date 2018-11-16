@@ -1,0 +1,14 @@
+Backing up  E:\archive\tst  at  E:\archive\tstnew  and verifying  False  and moving  E:\archive\tstnew\prc
+
+------------------------------------------ E:\archive\tst
+Error getting Exif Data:  E:\archive\tst\tstrun.out.txt
+Traceback (most recent call last):
+  File "bkpmain.py", line 29, in <module>
+    shad.walkDir()
+  File "C:\dev\fileparse\bkp\dirwalk.py", line 34, in walkDir
+    processor.processFile(root, srcfile, context)
+  File "C:\dev\fileparse\bkp\bkpnsha.py", line 59, in processFile
+    bkproot = self.getBackupFolder(root, srcfile, context)
+  File "C:\dev\fileparse\bkp\bkpnsha.py", line 48, in getBackupFolder
+    bkproot = os.path.join(self.duplroot, dtype, ymd.year, ymd.month)
+AttributeError: 'NoneType' object has no attribute 'year'
